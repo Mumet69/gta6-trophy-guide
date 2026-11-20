@@ -1,4 +1,4 @@
-/* Leonida Trophy Guide — original look, no artwork: warm paper, a sunset
+/* Leonida Trophy Guide v3 — original look, no artwork: warm paper, a sunset
    gradient masthead, and grade-coloured badges. Readable at a glance. */
 :root {
   --paper: #faf6ee;
@@ -157,3 +157,72 @@ main { padding: 16px 24px 24px; }
   .detail-col { position: static; }
   .masthead { flex-direction: column; align-items: stretch; gap: 12px; }
 }
+
+/* v2 additions: stats strip, difficulty dots, numbered steps, stage bars,
+   unconfirmed badges, and tighter mobile behaviour. */
+.stats-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  padding: 12px 24px; background: #f3ecdc; border-bottom: 1px solid var(--line);
+}
+.stat-cell { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; box-shadow: var(--shadow); }
+.stat-big { font-weight: 800; font-size: 15px; }
+.stat-small { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+.trophy-meta { display: flex; gap: 10px; align-items: center; margin-top: 5px; }
+.difficulty { font-size: 11px; letter-spacing: 1px; color: var(--muted); }
+.difficulty .dot { color: #d8cfb8; }
+.difficulty .dot.on { color: var(--accent); }
+.trophy-time { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+
+.badge.unconfirmed { background: #6b5a1e; }
+.badge.time-badge { background: #eef3ee; color: var(--good); border: 1px solid #cfe3d2; }
+.detail-facts { color: var(--muted); font-size: 13.5px; margin: 8px 0 0; }
+.steps-list { margin: 6px 0 4px; padding-left: 22px; font-size: 15px; }
+.steps-list li { margin-bottom: 6px; }
+.tips-list { margin: 6px 0 4px; padding-left: 20px; font-size: 14.5px; }
+.tips-list li { margin-bottom: 4px; }
+.unconfirmed-note {
+  background: #fdf6e0; border: 1px solid #e8d9a0; border-left: 4px solid #8a6d1b;
+  border-radius: 6px; padding: 10px 12px; font-size: 14px; margin: 10px 0;
+}
+
+.stage-bar { height: 10px; background: #efe7d6; border-radius: 5px; overflow: hidden; margin: 4px 0 10px; }
+.stage-fill { height: 100%; background: var(--good); border-radius: 5px; transition: width 0.25s ease; }
+
+.reset-btn {
+  font: inherit; font-weight: 600; border: 1px solid var(--warn); border-radius: 6px;
+  padding: 7px 12px; cursor: pointer; background: #fff; color: var(--warn);
+}
+.reset-btn:hover { background: #fdeee8; }
+
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 3px solid #7a2e5d; outline-offset: 2px;
+}
+.trophy-row:focus-within { border-color: var(--accent); }
+
+@media (max-width: 1100px) {
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .columns { grid-template-columns: 1fr; }
+  .detail-col { position: static; }
+  .masthead { flex-direction: column; align-items: stretch; gap: 12px; }
+  .tool input[type="search"] { width: 100%; }
+  .toolbar .tool { flex: 1 1 45%; }
+}
+@media (max-width: 560px) {
+  .stats-strip { grid-template-columns: 1fr; padding: 10px 16px; }
+  .toolbar, .tabs, main, .foot { padding-left: 16px; padding-right: 16px; }
+  .masthead { padding: 16px; }
+  .masthead h1 { font-size: 24px; }
+  .trophy-row { grid-template-columns: 26px 1fr auto; }
+}
+
+/* v3: the platinum-path summary at the top of the tracker view. */
+.platinum-path {
+  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 4px; font-size: 14px;
+}
+.platinum-path strong { font-size: 15px; }
+.platinum-path span b { color: var(--accent); }

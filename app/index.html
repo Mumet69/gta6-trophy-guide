@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Leonida Trophy Guide — GTA VI · all 55 PS5 trophies</title>
-<meta name="description" content="Tracker and guide for the 55 PlayStation 5 trophies of Grand Theft Auto VI: checklist, roadmap to the platinum, missable flags, and a sourced guide to every trophy. Works offline.">
-<link rel="stylesheet" href="style.css">
+<meta name="description" content="Tracker and guide for the 55 PlayStation 5 trophies of Grand Theft Auto VI: checklist, roadmap to the platinum, missable flags, per-trophy steps, difficulty and time estimates, and a sourced guide to every trophy. Works offline.">
+<meta name="theme-color" content="#2b1d4e"><link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="masthead">
   <div class="masthead-text">
     <h1>Leonida Trophy Guide</h1>
-    <p class="subtitle">Grand Theft Auto VI · PlayStation 5 · all 55 trophies — 1 platinum, 2 gold, 6 silver, 46 bronze · 28 hidden</p>
+    <p class="subtitle">Grand Theft Auto VI · PlayStation 5 · all 55 trophies — 1 platinum, 2 gold, 6 silver, 46 bronze · 28 hidden · 1 missable · 5 unconfirmed</p>
   </div>
   <div class="progress-wrap" id="progress-wrap">
     <div class="progress-line"><span id="progress-text">0 of 55 earned</span><span id="progress-pct">0%</span></div>
@@ -28,7 +28,7 @@
 </nav>
 
 <section class="toolbar" id="toolbar">
-  <label class="tool">Search <input type="search" id="search-input" placeholder="Trophy or mission name…" autocomplete="off"></label>
+  <label class="tool">Search <input type="search" id="search-input" placeholder="Trophy, mission or tip…" autocomplete="off"></label>
   <label class="tool">Kind
     <select id="kind-filter">
       <option value="all">All kinds</option>
@@ -53,15 +53,51 @@
       <option value="bronze">Bronze</option>
     </select>
   </label>
+  <label class="tool">Difficulty
+    <select id="difficulty-filter">
+      <option value="all">Any difficulty</option>
+      <option value="1">1 — Very easy</option>
+      <option value="2">2 — Easy</option>
+      <option value="3">3 — Medium</option>
+      <option value="4">4 — Hard</option>
+      <option value="5">5 — Very hard</option>
+    </select>
+  </label>
+  <label class="tool">Status
+    <select id="status-filter">
+      <option value="all">Confirmed + unconfirmed</option>
+      <option value="confirmed">Confirmed only</option>
+      <option value="unconfirmed">Unconfirmed only</option>
+    </select>
+  </label>
+  <label class="tool">Sort
+    <select id="sort-select">
+      <option value="default">List order</option>
+      <option value="name">Name A–Z</option>
+      <option value="difficulty">Hardest first</option>
+      <option value="easiest">Easiest first</option>
+      <option value="time">Longest first</option>
+      <option value="grade">Grade (best first)</option>
+    </select>
+  </label>
   <label class="tool check"><input type="checkbox" id="spoiler-toggle" checked> Hide story spoilers</label>
   <label class="tool check"><input type="checkbox" id="earned-only"> Earned only</label>
   <span class="spacer"></span>
   <button type="button" id="export-btn">Export progress</button>
+  <button type="button" id="reset-btn" class="reset-btn">Reset</button>
   <label class="import-btn">Import progress <input type="file" id="import-input" accept="application/json,.json"></label>
 </section>
 
+<div class="stats-strip" id="stats-strip" aria-live="polite"></div>
+
 <main>
   <section id="tracker-view" class="view">
+    <div class="platinum-path" id="platinum-path">
+      <strong>The platinum path in three stages:</strong>
+      <span><b>1 · Story</b> — finish Chapters 1–5 (60–80 hrs); do the Chapter 1 meditation first, it is the only missable.</span>
+      <span><b>2 · 100% checklist</b> — after the story, work Progress &gt; Stats &gt; 100% Completion (~100 hrs).</span>
+      <span><b>3 · Cleanup</b> — Strangers &amp; Freaks and the leftover trophies (~10 hrs). Total 200–300 hrs, difficulty 4/10.</span>
+    </div>
     <div class="columns">
       <div class="list-col">
         <p class="list-meta" id="list-meta"></p>
@@ -76,7 +112,7 @@
 </main>
 
 <footer class="foot">
-  <p>Names, descriptions and grades are the official list as PlayStation publishes it (Exophase / PSNProfiles, 18 Nov 2026). Every guide is written in our own words and cites its sources; where a trophy is not yet confirmed, the guide says so plainly instead of guessing. No Rockstar artwork is used. Your checklist is saved only in this browser.</p>
+  <p>Names, descriptions and grades are the official list as PlayStation publishes it, cross-checked across Exophase, PSNProfiles, PowerPyx, PushSquare, KeenGamer and planetgta6 on 20 Nov 2026 — Rockstar and Sony have not published an official list. Every guide is written in our own words and cites its sources; five trophies have no confirmed unlock method yet and are marked unconfirmed instead of guessed at, and difficulty and time figures are estimates. No Rockstar artwork is used. Your checklist is saved only in this browser.</p>
 </footer>
 
 <script type="module" src="js/main.js"></script>
