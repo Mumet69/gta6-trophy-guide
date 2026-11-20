@@ -1,8 +1,11 @@
 // The roadmap to the platinum, the missables page, and the sources page.
 // All three are built from the official descriptions and the cited guides:
 // PowerPyx's roadmap is ~200 hours, difficulty 4/10, one playthrough, no
-// mission replay, and a single potentially missable trophy.
-import { KIND_LABELS, sourceName, sourceUrl } from './data.js';
+// mission replay, and a single potentially missable trophy. v2 adds a
+// per-stage progress bar and time-left estimate, a "what's left" checklist,
+// and an honesty note: the list is cross-checked, not officially published,
+// and five trophies still have no confirmed unlock method.
+import { KIND_LABELS, DIFFICULTY_LABELS, formatHours, sourceName, sourceUrl } from './data.js';
 
 const STAGES = [
   {
@@ -45,7 +48,27 @@ function stageTrophies(trophies, stage) {
   return trophies.filter((t) => t.stage === stage);
 }
 
-// renderRoadmap: the three stages, each with its trophies as clickable chips.
+// stageRemaining: the unearned trophies of a stage, hardest first — used by
+// the "what's left" list so the roadmap always points at the next hard goal.
+export function stageRemaining(trophies, stage, earned) {
+  return stageTrophies(trophies, stage)
+    .filter((t) => !earned.has(t.id))
+    .sort((a, b) => b.difficulty - a.difficulty || (b.timeMin ?? 0) - (a.timeMin ?? 0));
+}
+
+// stageStats: earned count, total, and estimated minutes left for a stage.
+function stageStats(trophies, stage, earned) {
+  const inStage = stageTrophies(trophies, stage);
+  const done = inStage.filter((t) => earned.has(t.id)).length;
+  const minutes = inStage
+    .filter((t) => !earned.has(t.id) && typeof t.timeMin === 'number')
+    .reduce((sum, t) => sum + t.timeMin, 0);
+  return { total: inStage.length, done, minutes };
+}
+
+// renderRoadmap: the three stages, each with a progress bar, an estimate of
+// what is left, and its trophies as clickable chips — plus a "what's left"
+// checklist of the hardest remaining trophies.
 export function renderRoadmap(trophies, earned, onSelect) {
   const view = document.getElementById('roadmap-view');
   view.replaceChildren();
@@ -54,17 +77,24 @@ export function renderRoadmap(trophies, earned, onSelect) {
   const h = document.createElement('h2');
   h.textContent = 'Roadmap to the platinum — about 200 hours, difficulty 4/10';
   const p = document.createElement('p');
-  p.textContent = 'PowerPyx rates the set 4 out of 10 and about 200 hours, with a single playthrough enough: no difficulty trophies, no mission medals, no online trophies, and no mission replay. Work the stages in order; the checklist in Stage 2 is where most of the time goes.';
+  p.textContent = 'PowerPyx rates the set 4 out of 10 and about 200 hours, with a single playthrough enough: no difficulty trophies, no mission medals, no online trophies, and no mission replay. PushSquare puts the same run at up to 300 hours, so plan on 200–300. Work the stages in order; the checklist in Stage 2 is where most of the time goes.';
   intro.append(h, p);
   view.append(intro);
   for (const s of STAGES) {
+    const stats = stageStats(trophies, s.stage, earned);
     const box = document.createElement('div');
     box.className = 'stage';
     const title = document.createElement('h2');
     title.textContent = s.title;
     const meta = document.createElement('p');
     meta.className = 'stage-meta';
-    meta.textContent = s.meta;
+    meta.textContent = `${s.meta} · ${stats.done}/${stats.total} earned · about ${formatHours(stats.minutes)} left (est.)`;
+    const bar = document.createElement('div');
+    bar.className = 'stage-bar';
+    const fill = document.createElement('div');
+    fill.className = 'stage-fill';
+    fill.style.width = `${stats.total ? Math.round((stats.done / stats.total) * 100) : 0}%`;
+    bar.append(fill);
     const list = document.createElement('ul');
     for (const point of s.points) {
       const item = document.createElement('li');
@@ -77,13 +107,38 @@ export function renderRoadmap(trophies, earned, onSelect) {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chip' + (earned.has(t.id) ? ' done' : '');
-      chip.textContent = `${earned.has(t.id) ? '✓ ' : ''}${t.name} · ${t.grade}`;
+      chip.textContent = `${earned.has(t.id) ? '✓ ' : ''}${t.name} · ${t.grade} · ${t.difficulty}/5`;
+      chip.title = `${DIFFICULTY_LABELS[t.difficulty] || ''} · ${t.time}`;
       chip.addEventListener('click', () => onSelect(t.id));
       chips.append(chip);
     }
-    box.append(title, meta, list, chips);
+    box.append(title, meta, bar, list, chips);
     view.append(box);
   }
+  const left = trophies.filter((t) => !earned.has(t.id));
+  const whatsLeft = document.createElement('div');
+  whatsLeft.className = 'stage';
+  const wh = document.createElement('h2');
+  wh.textContent = 'What’s left — hardest first';
+  const wp = document.createElement('p');
+  wp.className = 'stage-meta';
+  wp.textContent = left.length
+    ? 'The unearned trophies below, hardest first. Tick them off in the tracker as you earn them.'
+    : 'Nothing left — every trophy is earned. The platinum should have popped.';
+  whatsLeft.append(wh, wp);
+  const list = document.createElement('ul');
+  for (const t of [...left].sort((a, b) => b.difficulty - a.difficulty || (b.timeMin ?? 0) - (a.timeMin ?? 0)).slice(0, 10)) {
+    const item = document.createElement('li');
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'chip';
+    link.textContent = `${t.name} — ${t.grade}, difficulty ${t.difficulty}/5, ${t.time}`;
+    link.addEventListener('click', () => onSelect(t.id));
+    item.append(link);
+    list.append(item);
+  }
+  whatsLeft.append(list);
+  view.append(whatsLeft);
 }
 
 // renderMissables: the one trophy that can be missed, and why the rest cannot.
@@ -106,15 +161,22 @@ export function renderMissables(trophies, earned, onSelect) {
     title.textContent = `${t.name} — ${t.description}`;
     const meta = document.createElement('p');
     meta.className = 'stage-meta';
-    meta.textContent = `${t.grade} · ${KIND_LABELS[t.kind] || t.kind} · PSN tracks ${t.target}`;
+    meta.textContent = `${t.grade} · ${KIND_LABELS[t.kind] || t.kind} · PSN tracks ${t.target} · difficulty ${t.difficulty}/5 · about ${t.time}`;
     const guide = document.createElement('p');
     guide.textContent = t.guide;
+    const steps = document.createElement('ol');
+    steps.className = 'steps-list';
+    for (const step of t.steps || []) {
+      const item = document.createElement('li');
+      item.textContent = step;
+      steps.append(item);
+    }
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'chip';
-    chip.textContent = 'Open its guide';
+    chip.textContent = earned.has(t.id) ? '✓ Earned — open its guide' : 'Open its guide';
     chip.addEventListener('click', () => onSelect(t.id));
-    box.append(title, meta, guide, chip);
+    box.append(title, meta, guide, steps, chip);
     view.append(box);
   }
   const note = document.createElement('div');
@@ -144,6 +206,8 @@ export function renderSources(doc) {
     psnprofiles: 'The progress counts PlayStation tracks for each trophy (for example 250 stunts, 42 shooting range challenges, 18 meditation spots).',
     powerpyx: 'The roadmap (about 200 hours, difficulty 4/10, one playthrough, no mission replay), the one potentially missable trophy, and the per-trophy steps — including which five trophies it lists as not yet known.',
     planetgta6: 'Which 28 trophies stay hidden on PlayStation until earned, and which 27 are visible from the start.',
+    pushsquare: 'Cross-check on the full list and the roadmap; puts the platinum at up to 300 hours, against PowerPyx’s 200.',
+    keengamer: 'Cross-check on all 55 trophies and the five still-unsolved hidden trophies.',
   };
   for (const [key, info] of Object.entries(doc.sources)) {
     const item = document.createElement('li');
@@ -156,5 +220,9 @@ export function renderSources(doc) {
     list.append(item);
   }
   box.append(list);
+  const accuracy = document.createElement('p');
+  accuracy.className = 'stage-meta';
+  accuracy.textContent = 'Accuracy note (checked 20 Nov 2026): Rockstar and Sony have not published an official trophy list. The names, descriptions and grades here match across all six sources above. Five trophies — In The Beginning…, Capital Offense, Bad Luck, I Guess, The Truth Is Out There and Ten Pin — have no confirmed unlock method yet and are marked unconfirmed in the tracker. Difficulty and time figures are this guide’s estimates.';
+  box.append(accuracy);
   view.append(box);
 }
