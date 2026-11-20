@@ -1,9 +1,11 @@
 // Boot: loads the trophy list, wires the toolbar and tabs, and keeps the
-// checklist, the guide pane and the progress bar in sync. Screenshot views
-// are driven by query parameters (?view=roadmap&spoilers=off&trophy=28).
+// checklist, the guide pane, the stats strip and the progress bar in sync.
+// Screenshot views are driven by query parameters
+// (?view=roadmap&spoilers=off&trophy=28&sort=difficulty). v2 remembers the
+// sort and filter choices in localStorage and adds a reset-progress button.
 import { loadTrophyData } from './data.js';
-import { loadProgress, saveProgress, loadSpoilers, saveSpoilers, exportProgress, importProgress } from './state.js';
-import { renderTrophyList, renderTrophyDetail, updateProgressBar } from './render.js';
+import { loadProgress, saveProgress, resetProgress, loadSpoilers, saveSpoilers, loadView, saveView, exportProgress, importProgress, progressSummary } from './state.js';
+import { renderTrophyList, renderTrophyDetail, renderStats, updateProgressBar } from './render.js';
 import { renderRoadmap, renderMissables, renderSources } from './roadmap.js';
 
 const VIEWS = ['tracker', 'roadmap', 'missables', 'sources'];
@@ -16,16 +18,21 @@ let spoilersOn = loadSpoilers();
 let selectedId = null;
 let currentView = 'tracker';
 
+const savedView = loadView();
 const filters = {
   search: '',
   kind: 'all',
   grade: 'all',
+  difficulty: savedView.difficulty || 'all',
+  status: savedView.status || 'all',
+  sort: savedView.sort || 'default',
   earnedOnly: false,
   earned,
 };
 
 function refresh() {
   updateProgressBar(trophies, earned);
+  renderStats(trophies, earned);
   renderTrophyList(trophies, doc, earned, spoilersOn, filters, selectedId, selectTrophy, toggleEarned);
   const selected = selectedId ? trophies.find((t) => t.id === selectedId) : null;
   renderTrophyDetail(selected, doc, earned, spoilersOn, toggleEarned);
@@ -49,6 +56,13 @@ function toggleEarned(id, on) {
   refresh();
 }
 
+// selectFirstMatch: picks the first trophy of the current filtered list, so
+// keyboard users and screenshot URLs always land on a visible guide.
+function selectFirstMatch() {
+  const first = document.querySelector('#trophy-list .trophy-row');
+  if (first) first.click();
+}
+
 function showView(view) {
   if (!VIEWS.includes(view)) view = 'tracker';
   currentView = view;
@@ -57,6 +71,7 @@ function showView(view) {
     document.getElementById(`tab-${v}`).classList.toggle('active', v === view);
   }
   document.getElementById('toolbar').style.display = view === 'tracker' ? '' : 'none';
+  document.getElementById('stats-strip').style.display = view === 'tracker' ? '' : 'none';
 }
 
 // Wire the tabs.
@@ -77,6 +92,21 @@ document.getElementById('grade-filter').addEventListener('change', (e) => {
   filters.grade = e.target.value;
   refresh();
 });
+document.getElementById('difficulty-filter').addEventListener('change', (e) => {
+  filters.difficulty = e.target.value;
+  saveView({ sort: filters.sort, difficulty: filters.difficulty, status: filters.status });
+  refresh();
+});
+document.getElementById('status-filter').addEventListener('change', (e) => {
+  filters.status = e.target.value;
+  saveView({ sort: filters.sort, difficulty: filters.difficulty, status: filters.status });
+  refresh();
+});
+document.getElementById('sort-select').addEventListener('change', (e) => {
+  filters.sort = e.target.value;
+  saveView({ sort: filters.sort, difficulty: filters.difficulty, status: filters.status });
+  refresh();
+});
 document.getElementById('spoiler-toggle').addEventListener('change', (e) => {
   spoilersOn = e.target.checked;
   saveSpoilers(spoilersOn);
@@ -87,11 +117,20 @@ document.getElementById('earned-only').addEventListener('change', (e) => {
   refresh();
 });
 document.getElementById('export-btn').addEventListener('click', () => exportProgress(earned));
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!earned.size) return;
+  if (confirm(`Reset your checklist? This clears ${progressSummary(earned, trophies.length)} from this browser.`)) {
+    earned = resetProgress();
+    filters.earned = earned;
+    refresh();
+  }
+});
 document.getElementById('import-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
     earned = await importProgress(file, validIds);
+    filters.earned = earned;
     saveProgress(earned);
     refresh();
   } catch {
@@ -100,11 +139,27 @@ document.getElementById('import-input').addEventListener('change', async (e) => 
   e.target.value = '';
 });
 
-// Query parameters: ?view=roadmap|missables|sources, ?spoilers=off, ?trophy=28.
+// Query parameters: ?view=roadmap|missables|sources, ?spoilers=off,
+// ?trophy=28, ?sort=difficulty, ?difficulty=5, ?status=unconfirmed.
 const params = new URLSearchParams(location.search);
 if (params.get('spoilers') === 'off') spoilersOn = false;
 if (params.get('spoilers') === 'on') spoilersOn = true;
 document.getElementById('spoiler-toggle').checked = spoilersOn;
+if (params.get('sort')) {
+  filters.sort = params.get('sort');
+  document.getElementById('sort-select').value = filters.sort;
+}
+if (params.get('difficulty')) {
+  filters.difficulty = params.get('difficulty');
+  document.getElementById('difficulty-filter').value = filters.difficulty;
+}
+if (params.get('status')) {
+  filters.status = params.get('status');
+  document.getElementById('status-filter').value = filters.status;
+}
+document.getElementById('difficulty-filter').value = filters.difficulty;
+document.getElementById('status-filter').value = filters.status;
+document.getElementById('sort-select').value = filters.sort;
 const wanted = Number(params.get('trophy'));
 if (validIds.has(wanted)) selectedId = wanted;
 refresh();
