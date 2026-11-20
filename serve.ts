@@ -1,9 +1,13 @@
 // A tiny static server for app/ (Node 22, standard library only), so the
 // guide can be tried locally without a build step:
-//   node serve.ts            serves app/ on http://localhost:8080
+//   node serve.ts                 serves app/ on http://localhost:8080
 //   node serve.ts --port 9000
+//   node serve.ts --port 9000 --host 0.0.0.0
 // It serves only files under app/, with the MIME types a browser needs.
 // A development convenience, not a server for the internet.
+// v2: --host flag, HEAD support, .webp/.svg/.ico MIME types, and a startup
+// message that lists the views (tracker, roadmap, missables, sources).
+// Query parameters still work for deep links, e.g. /?trophy=28&spoilers=off.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
@@ -14,6 +18,8 @@ const args = process.argv.slice(2);
 const portFlag = args.indexOf('--port');
 const wantedPort = portFlag === -1 ? 8080 : Number(args[portFlag + 1]);
 const port = Number.isInteger(wantedPort) && wantedPort > 0 && wantedPort < 65536 ? wantedPort : 8080;
+const hostFlag = args.indexOf('--host');
+const host = hostFlag === -1 ? '127.0.0.1' : args[hostFlag + 1] || '127.0.0.1';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -24,6 +30,9 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
 };
 
 createServer((request, response) => {
@@ -54,7 +63,12 @@ createServer((request, response) => {
     'content-length': size,
     'cache-control': 'no-store',
   });
+  if (request.method === 'HEAD') {
+    response.end();
+    return;
+  }
   createReadStream(file).pipe(response);
-}).listen(port, '127.0.0.1', () => {
-  console.log(`app/ is on http://localhost:${port}`);
+}).listen(port, host, () => {
+  console.log(`app/ is on http://${host}:${port}`);
+  console.log('views: / (tracker) · /?view=roadmap · /?view=missables · /?view=sources');
 });
